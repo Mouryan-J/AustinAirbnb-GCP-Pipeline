@@ -1,137 +1,99 @@
+# InsideAirbnb Austin – GCP Data Pipeline
 
-# **Airbnb Austin – Cloud-Based Big Data Processing Pipeline**
+This repository contains my course project for **INFO-I535: Big Data Concepts**.  
+I built a simple but complete cloud pipeline for the **InsideAirbnb Austin** listings dataset (~15,000 rows).
 
-This repository contains the implementation and documentation of a complete cloud-native data engineering workflow built using the *InsideAirbnb Austin* dataset. The project demonstrates raw data ingestion, distributed preprocessing, scalable analytical storage, and visualization using Google Cloud Platform (GCP). It was developed as part of the **Big Data Concepts and Implementations** course at Indiana University Bloomington.
-
----
-
-## **1. Project Overview**
-
-The primary objective of this project is to design and execute a reproducible big-data processing pipeline using managed cloud services. The workflow integrates multiple GCP components—Cloud Storage, Dataproc (PySpark), BigQuery, and Looker Studio—to demonstrate how large, semi-structured datasets can be systematically cleaned, structured, queried, and visualized in a modern cloud ecosystem.
-
-The dataset used is the 2024 InsideAirbnb Austin listings file (~15,000 rows), containing host attributes, pricing information, geolocation coordinates, and review metrics.
+The main goal is to show how to ingest, clean, store, and visualize data using managed Google Cloud services.
 
 ---
 
-## **2. System Architecture**
+## 1. Project Overview
 
-The project follows a multi-stage architecture typical of professional data engineering pipelines:
+- Use the public **InsideAirbnb Austin** dataset.
+- Upload raw data to **Google Cloud Storage (GCS)**.
+- Clean and transform the data with **PySpark** running on **Dataproc**.
+- Store the cleaned table in **BigQuery**.
+- Build interactive charts and maps in **Looker Studio**.
 
-```
-               ┌────────────────────────┐
-               │ InsideAirbnb Dataset   │
-               └────────────┬───────────┘
-                            ▼
-                ┌────────────────────┐
-                │ Google Cloud Storage│
-                │ raw/  scripts/     │
-                └───────────┬────────┘
-                            ▼
-                 ┌────────────────────┐
-                 │ Dataproc (PySpark) │
-                 │ Data Cleaning Job  │
-                 └───────────┬────────┘
-                            ▼
-                ┌──────────────────────┐
-                │   BigQuery Dataset   │
-                │ preprocessed listings│
-                └──────────┬───────────┘
-                            ▼
-                ┌──────────────────────┐
-                │    Looker Studio     │
-                │  Dashboards & Maps   │
-                └──────────────────────┘
-```
-
-This structure separates raw, processed, and analytical layers, ensuring reproducibility and clear data lineage.
+The focus is on the pipeline and data engineering steps, not on complex analytics.
 
 ---
 
-## **3. Data Processing Workflow**
+## 2. Dataset
 
-### **3.1 Data Ingestion**
-
-The raw CSV file (`listings.csv`) is uploaded to Google Cloud Storage under a dedicated `raw/` directory. Cloud Storage serves as the durable and centralized ingestion point.
-
-### **3.2 PySpark Preprocessing on Dataproc**
-
-A single-node Dataproc cluster executes the `preprocessing.py` PySpark script.
-Key processing steps include:
-
-* Unicode normalization (NFKD) to resolve BigQuery encoding conflicts
-* Removal of non-ASCII characters
-* Trimming and standardization of categorical fields
-* Cleaning of price and percentage fields
-* Conversion of all numeric columns to `DoubleType`
-* Median imputation for missing numerical values
-* Mode imputation for categorical columns
-* Removal of geospatially incomplete rows
-* Writing the processed dataset directly to BigQuery
-
-
-### **3.3 Analytical Queries in BigQuery**
-
-A collection of SQL queries (stored in `bigquery-views.sql`) is used to explore relationships across pricing, neighbourhood trends, host characteristics, review behaviour, and spatial patterns.
-
-### **3.4 Visualization in Looker Studio**
-
-Looker Studio dashboards provide interactive summaries such as:
-
-* Geographic distribution of listings
-* Average price by property type
-* Review scores by neighbourhood
-* Listings count per neighbourhood
-* Price vs. bedrooms
-* Map of low-rated properties
-
-Each visualization directly connects to the BigQuery table, ensuring real-time updates.
+- Source: InsideAirbnb – Austin, Texas listings (2024 snapshot).
+- Size: ~15,000 rows.
+- Example fields:
+  - `price`, `property_type`, `bedrooms`, `bathrooms`
+  - `host_neighbourhood`, `host_response_time`, `host_response_rate`
+  - `latitude`, `longitude`
+  - `review_scores_rating`, `number_of_reviews`
 
 ---
 
-## **4. Repository Structure**
+## 3. Pipeline Architecture
 
-```
-Airbnb-GCP-Pipeline/
-│
-├── preprocessing.py                 # PySpark cleaning script
-├── bigquery-views.sql               # Analytical SQL queries
-├── README.md                        # Project documentation
-│
-└── images/                          # Visualization outputs
-      ├── avg_price_property_type.jpg
-      ├── avg_review_rating_neighbourhood.jpg
-      ├── listings_by_neighbourhood.jpg
-      ├── bedrooms_vs_price.jpg
-      ├── map_low_reviews.jpg
-      ├── map_all_listings.jpg
-```
-
----
-
-## **5. Technologies Used**
-
-* **Google Cloud Storage** – Ingestion and persistent storage
-* **Google Dataproc (PySpark)** – Distributed preprocessing
-* **Google BigQuery** – Analytical data warehouse
-* **Looker Studio** – Visualization and dashboarding
-* **InsideAirbnb Dataset** – Public dataset source
-
-This pipeline exemplifies cloud-native processing using virtualization, distributed execution, and schema-driven analytics.
+1. **Cloud Storage**
+   - Bucket with folders:
+     - `raw/` – original `listings.csv`
+     - `processed/` – cleaned data 
+     - `scripts/` – PySpark cleaning script
+     - `logs/` – job logs
+2. **Dataproc + PySpark**
+   - Single-node cluster (`n1-standard-4`).
+   - Runs `preprocessing.py` to clean the dataset.
+3. **BigQuery**
+   - Dataset: `airbnb_dataset`
+   - Main table: `preproccessed_lisitings`
+4. **Looker Studio**
+   - Connects to BigQuery and shows charts and maps.
 
 ---
 
-## **6. Dataset Source**
+## 4. Data Cleaning Steps (PySpark)
 
-Inside Airbnb Project
-[https://insideairbnb.com](https://insideairbnb.com)
+In `preprocessing.py`:
 
-Austin, Texas listings — September 2024 release.
+- Select only useful columns (host, price, reviews, location, property info).
+- Trim spaces and clean text fields.
+- Normalize Unicode and remove non-ASCII characters.
+- Clean `price` and percentage fields (remove `$`, `%`, commas).
+- Convert all numeric fields to the right types.
+- Fill missing numeric values with the **median**.
+- Fill missing categorical values (e.g., neighbourhood, property_type) with the **most frequent value**.
+- Drop rows with missing latitude or longitude.
+- Write the final cleaned table to **BigQuery**.
 
 ---
 
-## **7. Author**
+## 5. BigQuery Queries
 
-**Mouryan Jayasankar**
-Indiana University Bloomington
+In `bigquery-views.sql` you will find example queries, including:
 
+- Average price by property type.
+- Number of listings by neighbourhood.
+- Average price by neighbourhood.
+- Price vs accommodates (bed capacity).
+- Price vs review rating.
+- Host total listings vs price and rating.
+- Bedrooms/bathrooms vs average price.
+- Review count vs rating.
+
+These queries were used to understand the visualizations.
+
+---
+
+## 6. Visualizations (Looker Studio)
+
+Main charts and maps created:
+
+- **Listings by Neighbourhood** (bar chart).
+- **Average Price by Property Type** (bar chart).
+- **Average Review Rating by Neighbourhood** (treemap).
+- **Average Price vs Number of Bedrooms** (bar chart).
+- **Map of rentals in Zilker** (bubble map).
+- **Map of listings with review score < 3** (bubble map).
+
+
+Screenshots are stored in the `images/` folder.
 
