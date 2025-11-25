@@ -68,7 +68,6 @@ Key processing steps include:
 * Removal of geospatially incomplete rows
 * Writing the processed dataset directly to BigQuery
 
-The BigQuery connector (`spark-bigquery-latest_2.12.jar`) enables seamless integration.
 
 ### **3.3 Analytical Queries in BigQuery**
 
