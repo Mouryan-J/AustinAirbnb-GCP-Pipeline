@@ -68,7 +68,7 @@ In `preprocessing.py`:
 
 ## 5. BigQuery Queries
 
-In `bigquery-views.sql` you will find example queries, including:
+In `BigQuery.sql` you will find example queries, including:
 
 - Average price by property type.
 - Number of listings by neighbourhood.
